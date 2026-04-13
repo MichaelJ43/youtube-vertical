@@ -1,5 +1,8 @@
-# After a PR is merged into the default branch: bump semver from PR title, push, tag.
-# Tag push triggers release.yml (build + GitHub Release with Chrome/Firefox zips).
+# After a PR is merged into the default branch: bump semver from PR title, push, tag,
+# then build and publish a GitHub Release in *this same workflow*.
+#
+# Tag pushes made with GITHUB_TOKEN do not trigger other workflows (GitHub limitation),
+# so release steps must run here — not in a separate on: push: tags workflow.
 #
 # Uses pull_request_target so GITHUB_TOKEN can write when the PR came from a fork.
 # Checkout is limited to merge_commit_sha (post-merge main), not the PR head ref.
@@ -24,6 +27,8 @@ jobs:
   bump-and-tag:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
     steps:
       - name: Checkout merge commit
         uses: actions/checkout@v4
@@ -69,3 +74,49 @@ jobs:
           git push origin "HEAD:${BASE_REF}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin "v${VERSION}"
+
+  # Must run in this workflow: tag push from GITHUB_TOKEN does not start other workflows.
+  publish:
+    needs: bump-and-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v${{ needs.bump-and-tag.outputs.version }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
+
+      - run: npx playwright install chromium --with-deps
+
+      - run: npm run test:ui
+        env:
+          PW_EXTENSION_HEADLESS: "1"
+
+      - name: Package zips
+        run: |
+          (cd dist-chrome && zip -r ../youtube-vertical-chrome.zip .)
+          (cd dist-firefox && zip -r ../youtube-vertical-firefox.zip .)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.bump-and-tag.outputs.version }}
+          name: v${{ needs.bump-and-tag.outputs.version }}
+          files: |
+            youtube-vertical-chrome.zip
+            youtube-vertical-firefox.zip
+          generate_release_notes: true

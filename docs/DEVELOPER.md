@@ -48,5 +48,5 @@ Set `PW_EXTENSION_HEADLESS=1` for headless Chromium (used in CI).
 ## Release artifacts
 
 - **CI** (`.github/workflows/ci.yml`): on pushes and pull requests to `main` / `master`, runs lint, typecheck, tests, build, and UI tests.
-- **Version bump** (`.github/workflows/release-on-merge.yml`): when a PR is **merged**, reads the PR title for `+(semver:major|minor|patch)` (defaults to **patch** if missing), bumps `package.json`, commits to the base branch, and pushes tag `v*.*.*`.
-- **Release** (`.github/workflows/release.yml`): on tag push, re-runs checks, builds zips, and publishes a GitHub Release with `youtube-vertical-chrome.zip` and `youtube-vertical-firefox.zip`.
+- **Version bump + publish** (`.github/workflows/release-on-merge.yml`): when a PR is **merged**, reads the PR title for `+(semver:major|minor|patch)` (defaults to **patch** if missing), bumps `package.json`, commits, pushes tag `v*.*.*`, then in the **same workflow run** builds zips and creates the GitHub Release. (A separate `on: push: tags` workflow would **not** run for tags created with `GITHUB_TOKEN`—GitHub blocks that chain—so publishing must stay in this job.)
+- **Release** (`.github/workflows/release.yml`): optional **manual** path—**Actions → Release → Run workflow** and enter an existing tag (e.g. `v0.1.1`) to build and publish zips; or triggers on tag push if the tag was pushed with credentials that allow workflow dispatch (e.g. a PAT from a maintainer’s machine).

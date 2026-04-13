@@ -103,7 +103,8 @@ On Linux CI, headed mode can be used under Xvfb if needed; headless is preferred
 ## Versioning and releases
 
 - **`package.json` version** is copied into each build’s `manifest.json` when you run `npm run build`.
-- **Automated releases**: when a pull request is **merged** into `main` or `master`, [`.github/workflows/release-on-merge.yml`](.github/workflows/release-on-merge.yml) bumps the version, commits, pushes, and creates a git tag. [`.github/workflows/release.yml`](.github/workflows/release.yml) runs on that tag and uploads **Chrome** and **Firefox** zip artifacts to GitHub Releases.
+- **Automated releases**: when a pull request is **merged** into `main` or `master`, [`.github/workflows/release-on-merge.yml`](.github/workflows/release-on-merge.yml) bumps the version, commits, pushes a git tag, **builds the extension**, and creates the GitHub Release with zip artifacts in the **same** workflow run (GitHub does not run a second workflow when the default token pushes a tag).
+- **Publish an existing tag** (e.g. tag exists but Release failed): in the repo go to **Actions** → **Release** → **Run workflow**, enter the tag (e.g. `v0.1.1`), and run.
 
 ### Semver bump from the PR title
 
