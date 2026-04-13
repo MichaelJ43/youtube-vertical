@@ -18,8 +18,8 @@ This repository implements a **WebExtension** that rearranges **YouTube watch pa
 | `scripts/extension-build.mjs` | esbuild orchestration, manifest version patch, static copies |
 | `manifest.chrome.json` / `manifest.firefox.json` | Source manifests (version `0.0.0` placeholder until build) |
 | `docs/` | User and developer documentation |
-| `.github/workflows/release-on-merge.yml` | On merged PR: semver bump from PR title, commit + tag |
-| `.github/workflows/release.yml` | On `v*.*.*` tag: build zips and GitHub Release |
+| `.github/workflows/release-on-merge.yml` | On merged PR: semver bump, commit, tag, **then build + GitHub Release** (same run; token-pushed tags do not start other workflows) |
+| `.github/workflows/release.yml` | Manual **Run workflow** with a tag, or tag push from a PAT; optional backfill for existing tags |
 
 Merged PR titles may include **`+(semver:major|minor|patch)`** to choose the bump; otherwise CI defaults to **patch** (see README).
 
