@@ -5,12 +5,12 @@
 On **youtube.com** watch pages (`/watch?v=…`), the extension:
 
 1. Makes the **main column** use the full width of your window.
-2. Keeps the **video player sticky** under the top bar so it stays visible while you scroll.
+2. Keeps the **video player pinned** under the top bar while you scroll (sticky CSS plus a scroll helper when YouTube’s page breaks plain `position: sticky`).
 3. Lets you scroll **title, description, and comments** below the player.
 4. **Hides** the default right-hand “Up next” column.
 5. Provides a bottom-right **Related** pill (YouTube-style) to open recommendations in a **slide-out panel** on the right.
 6. Close the panel with the **round ×** control above the panel, the **Close** pill, **Escape**, or a click on the **dimmed backdrop** outside the panel.
-7. On **narrow** layouts, hides the **related grid** that YouTube injects below the description so **comments** sit directly under the video info; related videos stay in the flyout.
+7. On **narrow** layouts, hides the **related grid** below the description until you open **Related**; then the same recommendations appear in the **flyout** (YouTube often leaves `#secondary` empty on narrow widths).
 
 ## Installing (development build)
 

@@ -1,8 +1,9 @@
 /** Injected layout rules; keep CSS-first for performance on the live page. */
 export function buildLayoutCss(panelWidthPx: number): string {
   const w = Math.min(520, Math.max(280, Math.round(panelWidthPx)));
+  const chipsBand = "min(132px, 22vh)";
   return `
-/* --- Scroll / overflow: sticky breaks if any ancestor clips (overflow not visible) --- */
+/* --- Scroll / overflow: helps native sticky; real pin uses JS + .ytvl-player-pinned --- */
 ytd-app.ytvl-enabled ytd-watch-flexy[flexy],
 ytd-app.ytvl-enabled ytd-watch-flexy #columns.ytd-watch-flexy,
 ytd-app.ytvl-enabled ytd-watch-flexy #primary.ytd-watch-flexy,
@@ -27,35 +28,46 @@ ytd-app.ytvl-enabled ytd-watch-flexy #primary.ytd-watch-flexy {
   order: 1 !important;
 }
 
-/* Sidebar column: hidden in flow; content shown only in flyout when open */
-ytd-app.ytvl-enabled ytd-watch-flexy #secondary.ytd-watch-flexy {
+/* Sidebar: hidden in document flow until flyout opens (wide layout may still populate it) */
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #secondary.ytd-watch-flexy {
   display: none !important;
   order: 2 !important;
 }
 
-/* --- Narrow / single-column: related grid & shelves that YouTube moves into primary --- */
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner > ytd-rich-grid-renderer,
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner ytd-watch-next-secondary-results-renderer,
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner #related,
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner ytd-related-shelf-renderer,
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner ytd-shelf-renderer:first-of-type {
+/*
+ * Narrow layouts: recommendations live in #primary. Hide them only while flyout is CLOSED.
+ * When OPEN, the same nodes get position:fixed so the panel is not empty.
+ */
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #primary-inner > ytd-rich-grid-renderer,
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #primary-inner ytd-watch-next-secondary-results-renderer,
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #primary-inner #related,
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #primary-inner ytd-related-shelf-renderer,
+ytd-app.ytvl-enabled:not(.ytvl-recs-open) ytd-watch-flexy #primary-inner > ytd-related-chip-cloud-renderer {
   display: none !important;
 }
 
-/* Chips row that often precedes the below-the-fold related grid */
-ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner > ytd-related-chip-cloud-renderer {
-  display: none !important;
+/* --- JS-assisted pin (IntersectionObserver + fixed + spacer) --- */
+ytd-app.ytvl-enabled.ytvl-player-pinned #player-wide-container,
+ytd-app.ytvl-enabled.ytvl-player-pinned #player-container-outer {
+  position: fixed !important;
+  top: var(--ytd-toolbar-height, 56px) !important;
+  left: var(--ytvl-pin-left, 0) !important;
+  width: var(--ytvl-pin-width, 100%) !important;
+  max-width: var(--ytvl-pin-width, 100%) !important;
+  z-index: 2040 !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important;
 }
 
-/* --- Pinned player: sticky on the outer player box + solid backdrop while scrolling --- */
-ytd-app.ytvl-enabled ytd-watch-flexy #player-wide-container,
-ytd-app.ytvl-enabled ytd-watch-flexy #player-container-outer {
+/* Before JS pins, keep a best-effort sticky for simple scroll roots */
+ytd-app.ytvl-enabled:not(.ytvl-player-pinned) ytd-watch-flexy #player-wide-container,
+ytd-app.ytvl-enabled:not(.ytvl-player-pinned) ytd-watch-flexy #player-container-outer {
   position: sticky !important;
   top: var(--ytd-toolbar-height, 56px) !important;
   z-index: 2030 !important;
   align-self: flex-start !important;
-  background: var(--yt-spec-base-background, #0f0f0f) !important;
-  box-shadow: 0 1px 0 var(--yt-spec-10-percent-layer, rgba(255,255,255,0.08)) !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  box-shadow: 0 1px 0 var(--yt-spec-10-percent-layer, rgba(0,0,0,0.08)) !important;
 }
 
 ytd-app.ytvl-enabled ytd-watch-flexy #player-container-inner,
@@ -67,10 +79,10 @@ ytd-app.ytvl-enabled ytd-watch-flexy ytd-player#ytd-player {
 }
 
 ytd-app.ytvl-enabled ytd-watch-flexy #primary-inner {
-  background: var(--yt-spec-base-background, #0f0f0f) !important;
+  background: var(--yt-spec-base-background, #fff) !important;
 }
 
-/* --- Flyout panel --- */
+/* --- Flyout: real #secondary (when it has list content) --- */
 ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #secondary.ytd-watch-flexy {
   display: block !important;
   position: fixed !important;
@@ -82,15 +94,79 @@ ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #secondary.ytd-watch-flexy {
   z-index: 2300 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: var(--yt-spec-base-background, #0f0f0f) !important;
-  border-left: 1px solid var(--yt-spec-10-percent-layer, rgba(255,255,255,0.1)) !important;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.45) !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  color: var(--yt-spec-text-primary, #0f0f0f) !important;
+  border-left: 1px solid var(--yt-spec-10-percent-layer, rgba(0,0,0,0.1)) !important;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18) !important;
   margin: 0 !important;
   padding: 48px 12px 24px 12px !important;
   box-sizing: border-box !important;
 }
 
-/* YouTube-style "Related" launcher (toolbar-adjacent pill) */
+/* If #secondary is empty (common on narrow), hide it so the primary flyout shows through */
+ytd-app.ytvl-enabled.ytvl-secondary-empty.ytvl-recs-open ytd-watch-flexy #secondary.ytd-watch-flexy {
+  display: none !important;
+}
+
+/* --- Flyout: primary-column related (chips + grid) when sidebar is empty --- */
+ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #primary-inner > ytd-related-chip-cloud-renderer {
+  display: flex !important;
+  position: fixed !important;
+  top: calc(var(--ytd-toolbar-height, 56px) + 44px) !important;
+  right: 0 !important;
+  width: ${w}px !important;
+  max-width: min(${w}px, 92vw) !important;
+  max-height: ${chipsBand} !important;
+  z-index: 2301 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  color: var(--yt-spec-text-primary, #0f0f0f) !important;
+  border-left: 1px solid var(--yt-spec-10-percent-layer, rgba(0,0,0,0.1)) !important;
+  padding: 8px 12px !important;
+  box-sizing: border-box !important;
+  box-shadow: -2px 4px 12px rgba(0,0,0,0.12) !important;
+}
+
+ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #primary-inner > ytd-rich-grid-renderer,
+ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #primary-inner ytd-watch-next-secondary-results-renderer,
+ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #primary-inner #related {
+  display: block !important;
+  position: fixed !important;
+  top: calc(var(--ytd-toolbar-height, 56px) + 44px + ${chipsBand}) !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: ${w}px !important;
+  max-width: min(${w}px, 92vw) !important;
+  z-index: 2300 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  color: var(--yt-spec-text-primary, #0f0f0f) !important;
+  border-left: 1px solid var(--yt-spec-10-percent-layer, rgba(0,0,0,0.1)) !important;
+  margin: 0 !important;
+  padding: 8px 12px 24px 12px !important;
+  box-sizing: border-box !important;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18) !important;
+}
+
+ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #primary-inner ytd-related-shelf-renderer {
+  display: block !important;
+  position: fixed !important;
+  top: calc(var(--ytd-toolbar-height, 56px) + 44px + ${chipsBand}) !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: ${w}px !important;
+  max-width: min(${w}px, 92vw) !important;
+  z-index: 2300 !important;
+  overflow-y: auto !important;
+  background: var(--yt-spec-base-background, #fff) !important;
+  border-left: 1px solid var(--yt-spec-10-percent-layer, rgba(0,0,0,0.1)) !important;
+  padding: 8px 12px 24px !important;
+  box-sizing: border-box !important;
+}
+
+/* YouTube-style "Related" launcher */
 #ytvl-floating-toggle {
   position: fixed;
   right: 12px;
@@ -131,7 +207,6 @@ ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #secondary.ytd-watch-flexy {
   opacity: 0.9;
 }
 
-/* Close control: matches flyout top bar (node lives under <html>, not ytd-app) */
 #ytvl-recs-close {
   position: fixed;
   top: calc(var(--ytd-toolbar-height, 56px) + 8px);
@@ -146,20 +221,19 @@ ytd-app.ytvl-enabled.ytvl-recs-open ytd-watch-flexy #secondary.ytd-watch-flexy {
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: var(--yt-spec-text-primary, #f1f1f1);
-  background: var(--yt-spec-badge-chip, rgba(255,255,255,0.08));
-  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  background: var(--yt-spec-badge-chip, rgba(0,0,0,0.06));
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 #ytvl-recs-close:hover {
-  background: var(--yt-spec-touch-response, rgba(255,255,255,0.14));
+  background: var(--yt-spec-touch-response, rgba(0,0,0,0.1));
 }
 
 html.ytvl-recs-open #ytvl-recs-close {
   display: inline-flex !important;
 }
 
-/* Dim main content; must sit above page but below panel + close */
 #ytvl-backdrop {
   position: fixed;
   inset: 0;

@@ -1,6 +1,7 @@
 import type { StorageSchema } from "../shared/types.js";
 import { buildLayoutCss } from "./layout-styles.js";
 import { debounce } from "./debounce.js";
+import { attachPlayerPin } from "./player-pin.js";
 import { isWatchPageUrl, queryAppRoot, SELECTORS } from "./selectors.js";
 
 const CLASS_ENABLED = "ytvl-enabled";
@@ -19,13 +20,21 @@ export class LayoutController {
   private panelWidthPx: number;
   private enabled: boolean;
   private observer: MutationObserver | null = null;
+  private pinCleanup: (() => void) | null = null;
   private readonly boundRefresh: () => void;
+  private readonly boundRebindPin: () => void;
   private readonly onKeyDown: (e: KeyboardEvent) => void;
 
   constructor(initial: StorageSchema) {
     this.enabled = initial.enabled;
     this.panelWidthPx = initial.panelWidthPx;
     this.boundRefresh = debounce(() => this.refreshDom(), 120);
+    this.boundRebindPin = debounce(() => {
+      this.pinCleanup?.();
+      this.pinCleanup = null;
+      if (!this.enabled || !isWatchPageUrl(document.location.href)) return;
+      this.pinCleanup = attachPlayerPin(document);
+    }, 350);
     this.onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (!this.recsOpen) return;
@@ -135,9 +144,24 @@ export class LayoutController {
     if (app) {
       app.classList.add(CLASS_ENABLED);
       doc.documentElement.classList.add(CLASS_ENABLED);
+      this.updateSecondaryEmpty(doc);
       this.applyBodyClasses(doc);
     }
     this.updateToggleVisibility(doc, true);
+    this.boundRebindPin();
+  }
+
+  /** When #secondary has no related list (typical on narrow), hide empty flyout shell. */
+  private updateSecondaryEmpty(doc: Document): void {
+    const app = queryAppRoot(doc);
+    if (!app?.classList.contains(CLASS_ENABLED)) return;
+    const sec = doc.querySelector("#secondary.ytd-watch-flexy");
+    const hasSecondary = Boolean(
+      sec?.querySelector(
+        "ytd-watch-next-secondary-results-renderer, ytd-compact-video-renderer, ytd-item-section-renderer, #related ytd-compact-video-renderer, ytd-compact-playlist-renderer",
+      ),
+    );
+    app.classList.toggle("ytvl-secondary-empty", !hasSecondary);
   }
 
   private applyBodyClasses(doc: Document): void {
@@ -167,8 +191,15 @@ export class LayoutController {
   }
 
   private teardownPage(doc: Document): void {
+    this.pinCleanup?.();
+    this.pinCleanup = null;
     const app = queryAppRoot(doc);
-    app?.classList.remove(CLASS_ENABLED, CLASS_RECS_OPEN);
+    app?.classList.remove(
+      CLASS_ENABLED,
+      CLASS_RECS_OPEN,
+      "ytvl-secondary-empty",
+      "ytvl-player-pinned",
+    );
     doc.documentElement.classList.remove(CLASS_ENABLED, CLASS_RECS_OPEN);
     this.recsOpen = false;
     this.updateToggleVisibility(doc, false);
