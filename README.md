@@ -11,9 +11,9 @@ Browser extension for **Chrome** and **Firefox** that improves watching YouTube 
 
 ## Install from GitHub Releases
 
-Official builds are attached to each **GitHub Release** for this repository (open the repo on GitHub, then use the **Releases** link in the sidebar).
+Official builds are on **[GitHub Releases](https://github.com/MichaelJ43/youtube-vertical/releases)**.
 
-1. Open the **Releases** page and download **`youtube-vertical-chrome.zip`** or **`youtube-vertical-firefox.zip`** for the latest version.
+1. Open the latest release and download **`youtube-vertical-chrome.zip`** or **`youtube-vertical-firefox.zip`**.
 
 ### Chrome / Edge (Chromium)
 
