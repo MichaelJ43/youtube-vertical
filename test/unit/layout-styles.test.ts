@@ -11,4 +11,10 @@ describe("buildLayoutCss", () => {
     const css = buildLayoutCss(900);
     expect(css).toContain("520px");
   });
+
+  it("uses html root selectors for overlay UI (backdrop lives under html)", () => {
+    const css = buildLayoutCss(360);
+    expect(css).toContain("html.ytvl-recs-open #ytvl-backdrop");
+    expect(css).toContain("html.ytvl-recs-open #ytvl-recs-close");
+  });
 });

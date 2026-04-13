@@ -6,20 +6,34 @@ import { isWatchPageUrl, queryAppRoot, SELECTORS } from "./selectors.js";
 const CLASS_ENABLED = "ytvl-enabled";
 const CLASS_RECS_OPEN = "ytvl-recs-open";
 
+const ICON_SIDEBAR = `<svg class="ytvl-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 8h4V4H4v4zm6 12h12v-4H10v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h12v-4H10v4zm6-10v4h6V4h-6z"/></svg>`;
+
+const ICON_CLOSE = `<svg class="ytvl-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
+
 export class LayoutController {
   private styleEl: HTMLStyleElement | null = null;
   private toggleBtn: HTMLButtonElement | null = null;
+  private recsCloseBtn: HTMLButtonElement | null = null;
   private backdrop: HTMLDivElement | null = null;
   private recsOpen = false;
   private panelWidthPx: number;
   private enabled: boolean;
   private observer: MutationObserver | null = null;
   private readonly boundRefresh: () => void;
+  private readonly onKeyDown: (e: KeyboardEvent) => void;
 
   constructor(initial: StorageSchema) {
     this.enabled = initial.enabled;
     this.panelWidthPx = initial.panelWidthPx;
     this.boundRefresh = debounce(() => this.refreshDom(), 120);
+    this.onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (!this.recsOpen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.recsOpen = false;
+      this.applyBodyClasses(document);
+    };
   }
 
   setState(next: StorageSchema): void {
@@ -30,6 +44,7 @@ export class LayoutController {
 
   start(doc: Document): void {
     this.ensureInjected(doc);
+    doc.addEventListener("keydown", this.onKeyDown, true);
     this.refreshDom();
     this.observer = new MutationObserver(() => this.boundRefresh());
     this.observer.observe(doc.documentElement, { childList: true, subtree: true });
@@ -48,6 +63,12 @@ export class LayoutController {
     this.applyBodyClasses(document);
   }
 
+  closeRecs(): void {
+    if (!this.recsOpen) return;
+    this.recsOpen = false;
+    this.applyBodyClasses(document);
+  }
+
   private ensureInjected(doc: Document): void {
     if (!this.styleEl) {
       const el = doc.createElement("style");
@@ -59,8 +80,6 @@ export class LayoutController {
       const btn = doc.createElement("button");
       btn.id = "ytvl-floating-toggle";
       btn.type = "button";
-      btn.textContent = "»";
-      btn.title = "Toggle recommendations";
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.toggleRecs();
@@ -68,12 +87,30 @@ export class LayoutController {
       doc.documentElement.appendChild(btn);
       this.toggleBtn = btn;
     }
+    if (!this.recsCloseBtn) {
+      const close = doc.createElement("button");
+      close.id = "ytvl-recs-close";
+      close.type = "button";
+      close.setAttribute("aria-label", "Close recommendations");
+      close.innerHTML = ICON_CLOSE;
+      close.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.closeRecs();
+      });
+      doc.documentElement.appendChild(close);
+      this.recsCloseBtn = close;
+    }
     if (!this.backdrop) {
       const bd = doc.createElement("div");
       bd.id = "ytvl-backdrop";
-      bd.addEventListener("click", () => {
-        this.recsOpen = false;
-        this.applyBodyClasses(doc);
+      bd.setAttribute("role", "presentation");
+      bd.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        this.closeRecs();
+      });
+      bd.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.closeRecs();
       });
       doc.documentElement.appendChild(bd);
       this.backdrop = bd;
@@ -97,6 +134,7 @@ export class LayoutController {
     const app = queryAppRoot(doc);
     if (app) {
       app.classList.add(CLASS_ENABLED);
+      doc.documentElement.classList.add(CLASS_ENABLED);
       this.applyBodyClasses(doc);
     }
     this.updateToggleVisibility(doc, true);
@@ -106,9 +144,19 @@ export class LayoutController {
     const app = queryAppRoot(doc);
     if (!app?.classList.contains(CLASS_ENABLED)) return;
     app.classList.toggle(CLASS_RECS_OPEN, this.recsOpen);
-    if (this.toggleBtn) {
-      this.toggleBtn.textContent = this.recsOpen ? "×" : "»";
-      this.toggleBtn.title = this.recsOpen ? "Close recommendations" : "Open recommendations";
+    /* Overlay controls are attached to <html>; mirror classes so CSS can target them. */
+    doc.documentElement.classList.toggle(CLASS_RECS_OPEN, this.recsOpen);
+    this.renderToggleLabel();
+  }
+
+  private renderToggleLabel(): void {
+    if (!this.toggleBtn) return;
+    if (this.recsOpen) {
+      this.toggleBtn.innerHTML = `${ICON_CLOSE}<span>Close</span>`;
+      this.toggleBtn.title = "Close recommendations panel";
+    } else {
+      this.toggleBtn.innerHTML = `${ICON_SIDEBAR}<span>Related</span>`;
+      this.toggleBtn.title = "Show related videos";
     }
   }
 
@@ -121,6 +169,7 @@ export class LayoutController {
   private teardownPage(doc: Document): void {
     const app = queryAppRoot(doc);
     app?.classList.remove(CLASS_ENABLED, CLASS_RECS_OPEN);
+    doc.documentElement.classList.remove(CLASS_ENABLED, CLASS_RECS_OPEN);
     this.recsOpen = false;
     this.updateToggleVisibility(doc, false);
     if (this.styleEl) {
@@ -129,11 +178,14 @@ export class LayoutController {
   }
 
   private teardownUi(doc: Document): void {
+    doc.removeEventListener("keydown", this.onKeyDown, true);
     this.teardownPage(doc);
     this.styleEl?.remove();
     this.styleEl = null;
     this.toggleBtn?.remove();
     this.toggleBtn = null;
+    this.recsCloseBtn?.remove();
+    this.recsCloseBtn = null;
     this.backdrop?.remove();
     this.backdrop = null;
   }

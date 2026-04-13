@@ -8,7 +8,9 @@ On **youtube.com** watch pages (`/watch?v=…`), the extension:
 2. Keeps the **video player sticky** under the top bar so it stays visible while you scroll.
 3. Lets you scroll **title, description, and comments** below the player.
 4. **Hides** the default right-hand “Up next” column.
-5. Provides a **floating button** (bottom-right, « / ×) to open or close recommendations in a **slide-out panel** on the right. Clicking the dimmed **backdrop** also closes the panel.
+5. Provides a bottom-right **Related** pill (YouTube-style) to open recommendations in a **slide-out panel** on the right.
+6. Close the panel with the **round ×** control above the panel, the **Close** pill, **Escape**, or a click on the **dimmed backdrop** outside the panel.
+7. On **narrow** layouts, hides the **related grid** that YouTube injects below the description so **comments** sit directly under the video info; related videos stay in the flyout.
 
 ## Installing (development build)
 
@@ -31,7 +33,7 @@ On **youtube.com** watch pages (`/watch?v=…`), the extension:
 3. Use the **toolbar icon** → popup to:
    - Turn the layout **on or off** for watch pages.
    - Change **flyout width** (recommendations panel).
-4. On the page, use the **floating control** to show or hide recommendations.
+4. On the page, use the **Related** / **Close** control (bottom-right) to show or hide recommendations.
 
 ## Limitations
 

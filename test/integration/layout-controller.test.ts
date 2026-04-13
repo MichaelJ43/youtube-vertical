@@ -18,6 +18,7 @@ describe("LayoutController with fixture DOM", () => {
 
   afterEach(() => {
     document.body.innerHTML = "";
+    document.documentElement.classList.remove("ytvl-enabled", "ytvl-recs-open");
   });
 
   it("detects watch structure", () => {
@@ -41,8 +42,14 @@ describe("LayoutController with fixture DOM", () => {
     c.toggleRecs();
     const app = document.querySelector("ytd-app");
     expect(app?.classList.contains("ytvl-recs-open")).toBe(true);
+    expect(document.documentElement.classList.contains("ytvl-recs-open")).toBe(
+      true,
+    );
     c.toggleRecs();
     expect(app?.classList.contains("ytvl-recs-open")).toBe(false);
+    expect(document.documentElement.classList.contains("ytvl-recs-open")).toBe(
+      false,
+    );
     c.stop();
   });
 });
