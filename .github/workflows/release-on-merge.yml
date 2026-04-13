@@ -100,7 +100,8 @@ jobs:
 
       - run: npm run build
 
-      - run: npx playwright install chromium --with-deps
+      # --with-deps can hang on apt; ubuntu-latest is enough for headless Chromium.
+      - run: npx playwright install chromium
 
       - run: npm run test:ui
         env:

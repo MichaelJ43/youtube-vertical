@@ -27,7 +27,7 @@ jobs:
 
       - run: npm run build
 
-      - run: npx playwright install chromium --with-deps
+      - run: npx playwright install chromium
 
       - name: UI tests (extension headless)
         run: npm run test:ui
