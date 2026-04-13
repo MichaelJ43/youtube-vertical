@@ -96,6 +96,7 @@ On Linux CI, headed mode can be used under Xvfb if needed; headless is preferred
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md) — version history.
 - [User guide](docs/USER_GUIDE.md) — how to install and use the extension.
 - [Developer guide](docs/DEVELOPER.md) — architecture, selectors, and release notes.
 - [AGENTS.md](AGENTS.md) — context for AI-assisted work on this repo.
