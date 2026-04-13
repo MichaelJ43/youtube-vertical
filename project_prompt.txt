@@ -1,0 +1,23 @@
+Guidelines:
+I want this to be a git enabled project
+This is a new project, all source code should be under ./src and all test code should be under ./test
+This should be a ready to install chrome and firefox extension.
+All supporting files should either be at the root or under appropriately named directories (ie. ./docs)
+I want comprehensive documentation, both on what the application does and how to use it
+I want Well written code that is maintainable and follows best practices
+I want Well written and comprehensive unit tests
+I want UI based tests
+I want Component tests that verify the application as a whole
+The language it is written in is not important, but I want it to be as fast as possible, so choose a language using that as a main criteria
+I want an AGENTS.md file to contain and manage project context for AI workers/prompt usage
+
+Process for Completing this:
+Phase 1: Plan the project
+Phase 2: Follow through on the plan, be sure to handle unit tests by following TDD
+Phase 3: Verify, run unit tests, run component tests, run any UI based tests
+Phase 4: Compile supplemental documentation and instructions
+Phase 5: Create the release pipeline, including versioning, test, and compile/release process, keep in mind the various platforms to support
+
+Project Details:
+This will be simple youtube video layout rearranger plugin.  The goal is to make it more user friendly to watch videos and scroll comments on a narrow vertical window (think using 1/4 width for an ultrawide monitor).
+The goal is for the video to be "full width" and pinned.  I want to be able to scroll through the comments below without the video moving.  I also want the recommended videos on the right side panel to be collapsable to the right.  So if I open it it's a popup style list.

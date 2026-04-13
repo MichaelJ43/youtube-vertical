@@ -1,0 +1,52 @@
+# Runs when "Version bump on merge" pushes a semver tag (see release-on-merge.yml).
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
+
+      - run: npx playwright install chromium --with-deps
+
+      - run: npm run test:ui
+        env:
+          PW_EXTENSION_HEADLESS: "1"
+
+      - name: Package zips
+        run: |
+          (cd dist-chrome && zip -r ../youtube-vertical-chrome.zip .)
+          (cd dist-firefox && zip -r ../youtube-vertical-firefox.zip .)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            youtube-vertical-chrome.zip
+            youtube-vertical-firefox.zip
+          generate_release_notes: true

@@ -1,0 +1,71 @@
+# After a PR is merged into the default branch: bump semver from PR title, push, tag.
+# Tag push triggers release.yml (build + GitHub Release with Chrome/Firefox zips).
+#
+# Uses pull_request_target so GITHUB_TOKEN can write when the PR came from a fork.
+# Checkout is limited to merge_commit_sha (post-merge main), not the PR head ref.
+
+name: Version bump on merge
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: release-versioning-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump-and-tag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Bump package.json from PR title
+        id: bump
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          VERSION="$(node scripts/bump-version.mjs)"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          if echo "${PR_TITLE}" | grep -qiE '\+\(semver:(major|minor|patch)\)'; then
+            echo "marker=matched" >> "${GITHUB_OUTPUT}"
+          else
+            echo "marker=default-patch" >> "${GITHUB_OUTPUT}"
+            echo "::notice::No +(semver:major|minor|patch) in PR title; defaulted to patch bump."
+          fi
+
+      - name: Sync package-lock.json
+        run: npm install --package-lock-only
+
+      - name: Commit, push, and tag
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.bump.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(release): v${VERSION}"
+          git push origin "HEAD:${BASE_REF}"
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+          git push origin "v${VERSION}"

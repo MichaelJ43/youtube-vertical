@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube Vertical Layout</title>
+    <style>
+      body {
+        font: 14px system-ui, sans-serif;
+        margin: 12px;
+        min-width: 260px;
+        background: #1c1c1c;
+        color: #eee;
+      }
+      h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 10px 0;
+        cursor: pointer;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+      .hint {
+        font-size: 12px;
+        color: #aaa;
+        margin-top: 12px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>YouTube Vertical Layout</h3>
+    <label>
+      <input type="checkbox" id="enabled" />
+      Enable on watch pages
+    </label>
+    <label for="width">Flyout width: <span id="widthVal">360</span>px</label>
+    <input type="range" id="width" min="280" max="520" step="10" value="360" />
+    <p class="hint">
+      Use the floating button (bottom-right on watch) to open or close the
+      recommendations panel.
+    </p>
+    <script src="../popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Vertical Layout",
+  "description": "Sticky full-width player, scrollable comments, and a flyout for recommendations on narrow layouts.",
+  "version": "0.0.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-vertical-layout@local",
+      "strict_min_version": "109.0"
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["*://www.youtube.com/*"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "YouTube Vertical Layout",
+    "default_popup": "popup/popup.html"
+  },
+  "icons": {
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": ["content/youtube.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

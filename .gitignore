@@ -1,0 +1,9 @@
+node_modules/
+dist-chrome/
+dist-firefox/
+*.log
+.DS_Store
+coverage/
+playwright-report/
+test-results/
+.env.env.*
