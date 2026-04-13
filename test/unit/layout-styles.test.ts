@@ -17,4 +17,12 @@ describe("buildLayoutCss", () => {
     expect(css).toContain("html.ytvl-recs-open #ytvl-backdrop");
     expect(css).toContain("html.ytvl-recs-open #ytvl-recs-close");
   });
+
+  it("opens primary related only when recs open (not permanently hidden)", () => {
+    const css = buildLayoutCss(360);
+    expect(css).toContain("ytd-app.ytvl-enabled:not(.ytvl-recs-open)");
+    expect(css).toContain("ytd-app.ytvl-enabled.ytvl-recs-open");
+    expect(css).toContain("ytvl-player-pinned");
+    expect(css).toContain("ytvl-secondary-empty");
+  });
 });
